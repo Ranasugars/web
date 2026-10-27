@@ -1,0 +1,1788 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>VisionCore Security & Control Hub</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdfa',
+              500: '#14b8a6',
+              600: '#0d9488',
+              700: '#0f766e',
+              900: '#134e4a',
+              accent: '#10b981',
+              warn: '#f59e0b',
+              danger: '#ef4444'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      touch-action: manipulation;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.3);
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="h-full bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-200 transition-colors duration-200 antialiased flex flex-col overflow-hidden">
+
+  <!-- AUTH / LOGIN OVERLAY -->
+  <div id="authOverlay" class="fixed inset-0 z-50 bg-slate-900/95 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 w-full max-w-md shadow-2xl relative overflow-hidden">
+      <div class="absolute -top-10 -right-10 w-32 h-32 bg-teal-500/10 rounded-full blur-2xl pointer-events-none"></div>
+      
+      <div class="text-center mb-6">
+        <div class="mx-auto h-14 w-14 rounded-2xl bg-gradient-to-tr from-teal-600 to-emerald-500 flex items-center justify-center text-white shadow-lg shadow-teal-500/30 mb-3 ring-1 ring-white/20">
+          <i class="fa-solid fa-shield-halved text-2xl"></i>
+        </div>
+        <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">VISION<span class="text-teal-500">CORE</span></h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Management Portal Login (Web Access)</p>
+      </div>
+
+      <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-mono uppercase text-slate-500 dark:text-slate-400 mb-1">Portal Username</label>
+          <div class="relative">
+            <i class="fa-solid fa-user absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+            <input type="text" id="loginUser" required placeholder="Enter portal username" autocomplete="username" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl pl-10 pr-3 py-2.5 text-sm focus:outline-none focus:border-teal-500 transition-colors">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-mono uppercase text-slate-500 dark:text-slate-400 mb-1">Portal Password</label>
+          <div class="relative">
+            <i class="fa-solid fa-lock absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+            <input type="password" id="loginPass" required placeholder="Enter portal password" autocomplete="current-password" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl pl-10 pr-3 py-2.5 text-sm focus:outline-none focus:border-teal-500 transition-colors">
+          </div>
+        </div>
+
+        <button type="submit" id="loginSubmitBtn" class="w-full py-3 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-semibold rounded-xl text-sm shadow-lg shadow-teal-600/25 active:scale-98 transition-all mt-2 flex items-center justify-center gap-2">
+          <span id="loginBtnSpinner" class="hidden"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
+          <span id="loginBtnText">Sign In to Portal</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MAIN APP CONTAINER -->
+  <div id="appContainer" class="h-full flex flex-col flex-1 overflow-hidden">
+    
+    <!-- Header -->
+    <header class="h-16 border-b border-slate-200 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/90 backdrop-blur px-3 sm:px-6 flex items-center justify-between z-20 shrink-0">
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- 3 lines button hidden on mobile, visible on desktop -->
+        <button onclick="toggleMobileSidebar()" class="hidden md:flex text-slate-600 dark:text-slate-300 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+          <i class="fa-solid fa-bars text-lg"></i>
+        </button>
+        
+        <div class="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-tr from-teal-600 to-emerald-500 flex items-center justify-center text-white shadow-md shadow-teal-500/20 ring-1 ring-white/20">
+          <i class="fa-solid fa-shield-halved text-base sm:text-xl"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5 sm:gap-2">
+            <h1 class="font-bold text-sm sm:text-lg tracking-tight text-slate-900 dark:text-white">VISION<span class="text-teal-500">CORE</span></h1>
+          </div>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[140px] sm:max-w-none">
+            User: <span class="text-teal-600 dark:text-teal-400 font-semibold" id="headerUserLabel">Admin</span>
+          </p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-1.5 sm:gap-3">
+        <!-- Theme Toggle Button -->
+        <button onclick="toggleTheme()" class="p-2 sm:px-3 sm:py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-300 hover:text-teal-500 transition-colors flex items-center gap-2 text-xs font-semibold">
+          <i id="themeIcon" class="fa-solid fa-moon text-sm"></i>
+          <span class="hidden sm:inline" id="themeLabel">Dark Mode</span>
+        </button>
+
+        <!-- Sync Button -->
+        <button onclick="fetchDataFromFirebase()" class="bg-teal-600/10 dark:bg-teal-600/20 border border-teal-500/30 text-teal-700 dark:text-teal-300 hover:bg-teal-600/20 p-2 sm:px-3 sm:py-1.5 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all">
+          <i class="fa-solid fa-rotate" id="refreshIcon"></i>
+          <span class="hidden sm:inline">Sync</span>
+        </button>
+
+        <!-- Config Gear Button (Removed from both mobile and PC mode) -->
+
+        <!-- Logout Button (Always Visible in Header) -->
+        <button onclick="handleLogout()" class="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 text-xs font-semibold flex items-center gap-1.5" title="Logout">
+          <i class="fa-solid fa-right-from-bracket"></i>
+          <span class="hidden sm:inline">Logout</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- App Body Layout -->
+    <div class="flex flex-1 overflow-hidden relative">
+      <div id="mobileDrawerBackdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-30 hidden md:hidden"></div>
+
+      <!-- Sidebar -->
+      <aside id="sidebar" class="fixed md:static inset-y-0 left-0 w-64 border-r border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900 flex flex-col justify-between shrink-0 z-40 transform -translate-x-full md:translate-x-0 transition-transform duration-200 ease-in-out">
+        <div class="p-4 space-y-1 overflow-y-auto">
+          <div class="flex items-center justify-between md:hidden pb-3 mb-2 border-b border-slate-200 dark:border-slate-800">
+            <span class="text-xs font-bold text-slate-500 uppercase tracking-wider font-mono">Navigation</span>
+            <button onclick="toggleMobileSidebar()" class="text-slate-400 p-1"><i class="fa-solid fa-xmark text-base"></i></button>
+          </div>
+
+          <p class="px-3 text-[10px] font-mono uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2 hidden md:block">Navigation</p>
+          
+          <button onclick="switchTab('overview')" id="nav-overview" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-teal-600 dark:text-teal-400 bg-teal-500/10 border border-teal-500/20">
+            <i class="fa-solid fa-chart-pie w-5 text-center"></i>
+            <span>Overview</span>
+          </button>
+
+          <button onclick="switchTab('portalusers')" id="nav-portalusers" class="nav-btn hidden w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60">
+            <i class="fa-solid fa-id-card-clip w-5 text-center text-indigo-500"></i>
+            <span>Portal Accounts</span>
+            <span id="portalUserCountBadge" class="ml-auto text-xs bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded-full font-mono">0</span>
+          </button>
+
+          <button onclick="switchTab('users')" id="nav-users" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60">
+            <i class="fa-solid fa-users-gear w-5 text-center"></i>
+            <span>Application Users</span>
+            <span id="userCountBadge" class="ml-auto text-xs bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded-full font-mono text-slate-600 dark:text-slate-300">0</span>
+          </button>
+
+          <button onclick="switchTab('cameras')" id="nav-cameras" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60">
+            <i class="fa-solid fa-video w-5 text-center"></i>
+            <span>CCTV Cameras</span>
+            <span id="camCountBadge" class="ml-auto text-xs bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded-full font-mono text-slate-600 dark:text-slate-300">0</span>
+          </button>
+
+          <button onclick="switchTab('sessions')" id="nav-sessions" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60">
+            <i class="fa-solid fa-desktop w-5 text-center"></i>
+            <span>Active Sessions</span>
+            <span id="sessionCountBadge" class="ml-auto text-xs bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-mono">0</span>
+          </button>
+
+          <button onclick="switchTab('activity')" id="nav-activity" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60">
+            <i class="fa-solid fa-clock-rotate-left w-5 text-center"></i>
+            <span>User Activity</span>
+            <span id="activityCountBadge" class="ml-auto text-xs bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded-full font-mono text-slate-600 dark:text-slate-300">0</span>
+          </button>
+
+          <div id="nav-appmanagement-wrapper" class="hidden pt-3 border-t border-slate-200 dark:border-slate-800/60 mt-2">
+            <button onclick="switchTab('appmanagement')" id="nav-appmanagement" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60">
+              <i class="fa-solid fa-sliders w-5 text-center text-cyan-500"></i>
+              <span class="flex items-center gap-2">
+                App Control
+                <span id="appStatusNavDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm"></span>
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <div class="p-4 border-t border-slate-200 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-950/40 space-y-2">
+          <div class="text-[11px] text-slate-500 dark:text-slate-400 font-mono truncate" id="currentUserDisplay">
+            Logged in as: <span class="font-bold text-teal-600 dark:text-teal-400" id="sessionUserLabel">Admin</span>
+          </div>
+          <button onclick="handleLogout()" class="w-full md:hidden py-2 px-3 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 text-xs font-semibold flex items-center justify-center gap-2">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span>Logout Account</span>
+          </button>
+        </div>
+      </aside>
+
+      <!-- Main Scrollable Content Area -->
+      <main class="flex-1 overflow-y-auto p-3 sm:p-6 bg-slate-50 dark:bg-slate-950 pb-24 md:pb-6">
+
+        <!-- OVERVIEW TAB -->
+        <section id="tab-overview" class="tab-content space-y-4 sm:space-y-6">
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 sm:p-5 rounded-2xl shadow-sm">
+            <h3 class="font-bold text-slate-800 dark:text-slate-200 text-xs sm:text-sm mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-bolt text-teal-500"></i> Quick Operations
+            </h3>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+              <button id="overviewPortalUserBtn" onclick="openPortalUserModal()" class="hidden p-3 bg-slate-50 dark:bg-slate-950 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col items-center text-center gap-2 group transition-all">
+                <div class="h-9 w-9 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-base group-hover:scale-110 transition-transform">
+                  <i class="fa-solid fa-id-card-clip"></i>
+                </div>
+                <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">Add Portal User</span>
+              </button>
+
+              <button onclick="openUserModal()" class="p-3 bg-slate-50 dark:bg-slate-950 hover:bg-teal-50 dark:hover:bg-teal-950/30 border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col items-center text-center gap-2 group transition-all">
+                <div class="h-9 w-9 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center text-base group-hover:scale-110 transition-transform">
+                  <i class="fa-solid fa-user-plus"></i>
+                </div>
+                <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">Add App User</span>
+              </button>
+
+              <button onclick="switchTab('appmanagement')" id="overviewAppControlBtn" class="hidden p-3 bg-slate-50 dark:bg-slate-950 hover:bg-cyan-50 dark:hover:bg-cyan-950/30 border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col items-center text-center gap-2 group transition-all">
+                <div class="h-9 w-9 rounded-lg bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center text-base group-hover:scale-110 transition-transform">
+                  <i class="fa-solid fa-sliders"></i>
+                </div>
+                <span class="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  App Control
+                  <span id="appStatusOverviewDot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                </span>
+              </button>
+
+              <button onclick="fetchDataFromFirebase()" class="p-3 bg-slate-50 dark:bg-slate-950 hover:bg-teal-50 dark:hover:bg-teal-950/30 border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col items-center text-center gap-2 group transition-all">
+                <div class="h-9 w-9 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center text-base group-hover:scale-110 transition-transform">
+                  <i class="fa-solid fa-rotate"></i>
+                </div>
+                <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">Sync Database</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3.5 sm:p-5 rounded-2xl flex flex-col justify-between relative overflow-hidden shadow-sm">
+              <div class="flex items-center justify-between mb-2">
+                <p class="text-[10px] sm:text-xs font-mono uppercase text-slate-400">Portal Accounts</p>
+                <div class="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center text-xs sm:text-sm">
+                  <i class="fa-solid fa-id-card-clip"></i>
+                </div>
+              </div>
+              <h3 id="statTotalPortalUsers" class="text-xl sm:text-3xl font-bold text-slate-900 dark:text-white font-mono">0</h3>
+              <p class="text-[10px] sm:text-[11px] text-indigo-600 dark:text-indigo-400 mt-1 truncate">Registered Portal Users</p>
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3.5 sm:p-5 rounded-2xl flex flex-col justify-between relative overflow-hidden shadow-sm">
+              <div class="flex items-center justify-between mb-2">
+                <p class="text-[10px] sm:text-xs font-mono uppercase text-slate-400">Total Cameras</p>
+                <div class="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center text-xs sm:text-sm">
+                  <i class="fa-solid fa-video"></i>
+                </div>
+              </div>
+              <h3 id="statTotalCameras" class="text-xl sm:text-3xl font-bold text-slate-900 dark:text-white font-mono">0</h3>
+              <p class="text-[10px] sm:text-[11px] text-amber-600 dark:text-amber-400 mt-1 truncate">Registered Cameras</p>
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3.5 sm:p-5 rounded-2xl flex flex-col justify-between relative overflow-hidden shadow-sm">
+              <div class="flex items-center justify-between mb-2">
+                <p class="text-[10px] sm:text-xs font-mono uppercase text-slate-400 truncate">Workstations</p>
+                <div class="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-xs sm:text-sm">
+                  <i class="fa-solid fa-laptop-code"></i>
+                </div>
+              </div>
+              <h3 id="statActiveSessions" class="text-xl sm:text-3xl font-bold text-slate-900 dark:text-white font-mono">0</h3>
+              <p class="text-[10px] sm:text-[11px] text-emerald-600 dark:text-emerald-400 mt-1 truncate">Active Systems</p>
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3.5 sm:p-5 rounded-2xl flex flex-col justify-between relative overflow-hidden shadow-sm">
+              <div class="flex items-center justify-between mb-2">
+                <p class="text-[10px] sm:text-xs font-mono uppercase text-slate-400">Activity Logs</p>
+                <div class="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-rose-500/10 text-rose-500 flex items-center justify-center text-xs sm:text-sm">
+                  <i class="fa-solid fa-clock-rotate-left"></i>
+                </div>
+              </div>
+              <h3 id="statTotalLogs" class="text-xl sm:text-3xl font-bold text-slate-900 dark:text-white font-mono">0</h3>
+              <p class="text-[10px] sm:text-[11px] text-slate-400 mt-1 truncate">Total Activity Entries</p>
+            </div>
+          </div>
+
+          <!-- Charts -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div class="lg:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-5 rounded-2xl shadow-sm">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-slate-800 dark:text-slate-200 text-xs sm:text-sm flex items-center gap-2">
+                  <i class="fa-solid fa-chart-line text-teal-500"></i> User Login Activity
+                </h3>
+                <span class="text-[10px] sm:text-xs text-slate-400 font-mono">Realtime Events</span>
+              </div>
+              <div class="h-48 sm:h-64">
+                <canvas id="activityChart"></canvas>
+              </div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-5 rounded-2xl flex flex-col justify-between shadow-sm">
+              <div>
+                <h3 class="font-bold text-slate-800 dark:text-slate-200 text-xs sm:text-sm flex items-center gap-2 mb-4">
+                  <i class="fa-solid fa-pie-chart text-emerald-500"></i> User Roles
+                </h3>
+                <div class="h-36 sm:h-48 relative flex items-center justify-center">
+                  <canvas id="rolesChart"></canvas>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-2 text-center text-xs mt-4">
+                <div class="bg-slate-50 dark:bg-slate-950 p-2 rounded-xl border border-slate-200 dark:border-slate-800">
+                  <p class="text-slate-400 text-[10px] uppercase font-mono">Admins</p>
+                  <p id="roleAdminCount" class="font-bold text-teal-500 font-mono text-base">0</p>
+                </div>
+                <div class="bg-slate-50 dark:bg-slate-950 p-2 rounded-xl border border-slate-200 dark:border-slate-800">
+                  <p class="text-slate-400 text-[10px] uppercase font-mono">Operators</p>
+                  <p id="roleOpCount" class="font-bold text-slate-600 dark:text-slate-300 font-mono text-base">0</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!--Portal Accounts TAB -->
+        <section id="tab-portalusers" class="tab-content hidden space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-sm">
+            <div>
+              <h3 class="font-bold text-slate-800 dark:text-slate-200 text-sm">Portal Accounts management </h3>
+              <p class="text-xs text-slate-400">Separate logins specifically to access this web portal on Mobile or PC</p>
+            </div>
+            <button onclick="openPortalUserModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-indigo-600/20">
+              <i class="fa-solid fa-user-plus"></i>
+              <span>Add Portal User</span>
+            </button>
+          </div>
+
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+            <div class="overflow-x-auto w-full">
+              <table class="w-full text-left text-xs min-w-[600px]">
+                <thead class="bg-slate-50 dark:bg-slate-950/80 text-slate-400 font-mono text-[11px] uppercase border-b border-slate-200 dark:border-slate-800">
+                  <tr>
+                    <th class="py-3 px-4">Portal Username</th>
+                    <th class="py-3 px-4">Password</th>
+                    <th class="py-3 px-4">Full Name</th>
+                    <th class="py-3 px-4 text-center">App Block Rights</th>
+                    <th class="py-3 px-4 text-center">Status</th>
+                    <th class="py-3 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="portalUserTableBody" class="divide-y divide-slate-100 dark:divide-slate-800/60 font-medium"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Application Users TAB -->
+        <section id="tab-users" class="tab-content hidden space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-sm">
+            <div class="relative flex-1">
+              <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+              <input type="text" id="userSearch" onkeyup="renderUsers()" placeholder="Search username, real name..." class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs rounded-xl pl-9 pr-3 py-2.5 focus:outline-none focus:border-teal-500">
+            </div>
+
+            <div class="flex items-center gap-2">
+              <select id="userRoleFilter" onchange="renderUsers()" class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-teal-500 flex-1 sm:flex-none">
+                <option value="ALL">All Roles</option>
+                <option value="Admin">Admin</option>
+                <option value="Operator">Operator</option>
+              </select>
+
+              <button onclick="openUserModal()" class="bg-teal-600 hover:bg-teal-500 text-white font-semibold text-xs px-3.5 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-teal-600/20 shrink-0">
+                <i class="fa-solid fa-user-plus"></i>
+                <span>Create User</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+            <div class="overflow-x-auto w-full">
+              <table class="w-full text-left text-xs min-w-[600px]">
+                <thead class="bg-slate-50 dark:bg-slate-950/80 text-slate-400 font-mono text-[11px] uppercase border-b border-slate-200 dark:border-slate-800">
+                  <tr>
+                    <th class="py-3 px-4">User Details</th>
+                    <th class="py-3 px-4">Role</th>
+                    <th class="py-3 px-4">Allowed PC</th>
+                    <th class="py-3 px-4 text-center">Cam Rights</th>
+                    <th class="py-3 px-4 text-center">Status</th>
+                    <th class="py-3 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="userTableBody" class="divide-y divide-slate-100 dark:divide-slate-800/60 font-medium"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- APPLICATION MANAGEMENT TAB -->
+        <section id="tab-appmanagement" class="tab-content hidden space-y-4">
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-6 rounded-2xl shadow-sm max-w-xl mx-auto space-y-6">
+            <div>
+              <h3 class="font-bold text-slate-800 dark:text-slate-200 text-base flex items-center gap-2">
+                <i class="fa-solid fa-sliders text-cyan-500"></i> App Control
+                <span id="appStatusMainDot" class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
+              </h3>
+              <p class="text-xs text-slate-400 mt-1">This section allows you to manage the global access and blocking status of desktop applications.</p>
+            </div>
+
+            <div class="p-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div class="text-center sm:text-left">
+                <span class="text-xs font-mono text-slate-400 uppercase block">Current Global Application Status</span>
+                <span id="appStatusLabel" class="text-lg font-bold font-mono text-emerald-500">ACTIVE</span>
+              </div>
+              <button onclick="toggleAppGlobalStatus()" id="appStatusBtn" class="w-full sm:w-auto px-5 py-2.5 rounded-xl font-bold text-xs bg-emerald-500 hover:bg-emerald-600 text-white transition-all shadow-md shadow-emerald-500/20">
+                Change App Status
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- CAMERAS TAB -->
+        <section id="tab-cameras" class="tab-content hidden space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-sm">
+            <div>
+              <h3 class="font-bold text-slate-800 dark:text-slate-200 text-sm">Server Camera Endpoints</h3>
+              <p class="text-xs text-slate-400">Manage CCTV cameras saved on Firebase</p>
+            </div>
+            <button onclick="openCameraModal()" class="bg-teal-600 hover:bg-teal-500 text-white font-semibold text-xs px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-teal-600/20">
+              <i class="fa-solid fa-plus"></i>
+              <span>Add Camera</span>
+            </button>
+          </div>
+
+          <div id="cameraCardsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </section>
+
+        <!-- ACTIVE SESSIONS TAB WITH KILL & UNINSTALL -->
+        <section id="tab-sessions" class="tab-content hidden space-y-4">
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl flex items-center justify-between shadow-sm">
+            <div>
+              <h3 class="font-bold text-slate-800 dark:text-slate-200 text-sm">Active Workstations</h3>
+              <p class="text-xs text-slate-400">Realtime logged-in client nodes</p>
+            </div>
+            <span class="text-xs bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-full font-mono flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> <span class="hidden xs:inline">Realtime Active</span>
+            </span>
+          </div>
+
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+            <div class="overflow-x-auto w-full">
+              <table class="w-full text-left text-xs min-w-[650px]">
+                <thead class="bg-slate-50 dark:bg-slate-950/80 text-slate-400 font-mono text-[11px] uppercase border-b border-slate-200 dark:border-slate-800">
+                  <tr>
+                    <th class="py-3 px-4">PC Name</th>
+                    <th class="py-3 px-4">IP Address</th>
+                    <th class="py-3 px-4">Logged In User</th>
+                    <th class="py-3 px-4">Type</th>
+                    <th class="py-3 px-4">Login Time</th>
+                    <th class="py-3 px-4 text-right">Remote Controls</th>
+                  </tr>
+                </thead>
+                <tbody id="sessionTableBody" class="divide-y divide-slate-100 dark:divide-slate-800/60 font-medium"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- USER ACTIVITY TAB -->
+        <section id="tab-activity" class="tab-content hidden space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-sm">
+            <div class="flex-1 relative">
+              <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+              <input type="text" id="activitySearch" onkeyup="renderUserActivity()" placeholder="Search activities by PC Name, User, IP Address, or Type..." class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs rounded-xl pl-9 pr-3 py-2.5 focus:outline-none focus:border-teal-500">
+            </div>
+            <button onclick="clearUserActivities()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/20 px-3.5 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all shrink-0">
+              <i class="fa-solid fa-trash-can"></i>
+              <span>Clear Activity Logs</span>
+            </button>
+          </div>
+
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+            <div class="overflow-x-auto w-full">
+              <table class="w-full text-left text-xs min-w-[550px]">
+                <thead class="bg-slate-50 dark:bg-slate-950/80 text-slate-400 font-mono text-[11px] uppercase border-b border-slate-200 dark:border-slate-800">
+                  <tr>
+                    <th class="py-3 px-4">Timestamp / Time</th>
+                    <th class="py-3 px-4">User</th>
+                    <th class="py-3 px-4">PC Name</th>
+                    <th class="py-3 px-4">IP Address</th>
+                    <th class="py-3 px-4">Role / Type</th>
+                  </tr>
+                </thead>
+                <tbody id="activityTableBody" class="divide-y divide-slate-100 dark:divide-slate-800/60 font-mono text-[12px]"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+      </main>
+
+      <!-- MOBILE BOTTOM NAVIGATION BAR -->
+      <nav class="md:hidden fixed bottom-0 left-0 right-0 h-14 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-slate-200 dark:border-slate-800 flex items-center justify-around z-30 px-1">
+        <button onclick="switchTab('overview')" class="flex flex-col items-center gap-0.5 text-slate-500 dark:text-slate-400 hover:text-teal-500 text-[10px]">
+          <i class="fa-solid fa-chart-pie text-base"></i>
+          <span>Overview</span>
+        </button>
+        <button onclick="switchTab('portalusers')" id="nav-mobile-portalusers" class="hidden flex flex-col items-center gap-0.5 text-slate-500 dark:text-slate-400 hover:text-teal-500 text-[10px]">
+          <i class="fa-solid fa-id-card-clip text-base"></i>
+          <span>Portal</span>
+        </button>
+        <button onclick="switchTab('users')" class="flex flex-col items-center gap-0.5 text-slate-500 dark:text-slate-400 hover:text-teal-500 text-[10px]">
+          <i class="fa-solid fa-users-gear text-base"></i>
+          <span>Users</span>
+        </button>
+        <button onclick="switchTab('cameras')" class="flex flex-col items-center gap-0.5 text-slate-500 dark:text-slate-400 hover:text-teal-500 text-[10px]">
+          <i class="fa-solid fa-video text-base"></i>
+          <span>CCTV</span>
+        </button>
+        <button onclick="switchTab('sessions')" class="flex flex-col items-center gap-0.5 text-slate-500 dark:text-slate-400 hover:text-teal-500 text-[10px]">
+          <i class="fa-solid fa-desktop text-base"></i>
+          <span>Sessions</span>
+        </button>
+        <button onclick="switchTab('activity')" class="flex flex-col items-center gap-0.5 text-slate-500 dark:text-slate-400 hover:text-teal-500 text-[10px]">
+          <i class="fa-solid fa-clock-rotate-left text-base"></i>
+          <span>Logs</span>
+        </button>
+      </nav>
+
+    </div>
+  </div>
+
+  <!-- PORTAL USER MODAL -->
+  <div id="portalUserModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-md p-5 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
+        <h3 id="portalUserModalTitle" class="font-bold text-slate-800 dark:text-slate-100 text-sm">Add Portal User Account</h3>
+        <button onclick="closePortalUserModal()" class="text-slate-400 p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <form id="portalUserForm" onsubmit="savePortalUser(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-400 font-mono uppercase text-[10px] mb-1">Portal Username</label>
+          <input type="text" id="inputPortalUsername" placeholder="e.g. manager1" required class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 font-mono focus:outline-none focus:border-indigo-500">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 font-mono uppercase text-[10px] mb-1">Password</label>
+            <input type="text" id="inputPortalPassword" placeholder="SecretPassword" required class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 font-mono focus:outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block text-slate-400 font-mono uppercase text-[10px] mb-1">Full Name</label>
+            <input type="text" id="inputPortalFullname" placeholder="John Doe" required class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 pt-2">
+          <label class="flex items-center gap-2 cursor-pointer bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-2.5 rounded-xl">
+            <input type="checkbox" id="inputPortalAppBlockRights" class="accent-indigo-500">
+            <span class="text-xs">App Block Rights</span>
+          </label>
+
+          <label class="flex items-center gap-2 cursor-pointer bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-2.5 rounded-xl">
+            <input type="checkbox" id="inputPortalStatus" checked class="accent-indigo-500">
+            <span class="text-xs">Account Active</span>
+          </label>
+        </div>
+
+        <div class="pt-4 flex justify-end gap-2">
+          <button type="button" onclick="closePortalUserModal()" class="px-4 py-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-xl">Save Portal User</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Application User MODAL -->
+  <div id="userModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-md p-5 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
+        <h3 id="userModalTitle" class="font-bold text-slate-800 dark:text-slate-100 text-sm">Create New Application User</h3>
+        <button onclick="closeUserModal()" class="text-slate-400 p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <form id="userForm" onsubmit="saveUser(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-400 font-mono uppercase text-[10px] mb-1">Username Key</label>
+          <input type="text" id="inputUsername" required class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 font-mono focus:outline-none focus:border-teal-500">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 font-mono uppercase text-[10px] mb-1">Password</label>
+            <input type="text" id="inputPassword" required class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 font-mono focus:outline-none focus:border-teal-500">
+          </div>
+          <div>
+            <label class="block text-slate-400 font-mono uppercase text-[10px] mb-1">Real Name</label>
+            <input type="text" id="inputRealname" required class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 focus:outline-none focus:border-teal-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 font-mono uppercase text-[10px] mb-1">Role</label>
+            <select id="inputRole" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 focus:outline-none focus:border-teal-500">
+              <option value="Operator">Operator</option>
+              <option value="Admin">Admin</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-400 font-mono uppercase text-[10px] mb-1">Allowed PC</label>
+            <input type="text" id="inputAllowedPc" value="ALL" required class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 font-mono focus:outline-none focus:border-teal-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 pt-2">
+          <label class="flex items-center gap-1.5 cursor-pointer bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-2 rounded-xl">
+            <input type="checkbox" id="inputCamRights" class="accent-teal-500">
+            <span class="text-[11px]">Cam Rights</span>
+          </label>
+
+          <label class="flex items-center gap-1.5 cursor-pointer bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-2 rounded-xl">
+            <input type="checkbox" id="inputStatus" checked class="accent-teal-500">
+            <span class="text-[11px]">Active</span>
+          </label>
+        </div>
+
+        <div class="pt-4 flex justify-end gap-2">
+          <button type="button" onclick="closeUserModal()" class="px-4 py-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-teal-600 text-white font-semibold rounded-xl">Save Account</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- CAMERA MODAL -->
+  <div id="cameraModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-md p-5 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
+        <h3 id="cameraModalTitle" class="font-bold text-slate-800 dark:text-slate-100 text-sm">Register CCTV Camera</h3>
+        <button onclick="closeCameraModal()" class="text-slate-400 p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <form id="cameraForm" onsubmit="saveCamera(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-400 font-mono uppercase text-[10px] mb-1">Camera ID Key</label>
+          <input type="text" id="inputCamId" placeholder="e.g. Camera_01" required class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 font-mono focus:outline-none focus:border-teal-500">
+        </div>
+
+        <div>
+          <label class="block text-slate-400 font-mono uppercase text-[10px] mb-1">Camera Name</label>
+          <input type="text" id="inputCamName" placeholder="Main Gate Camera" required class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 focus:outline-none focus:border-teal-500">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div>
+            <label class="block text-slate-400 font-mono uppercase text-[10px] mb-1">IP Address</label>
+            <input type="text" id="inputCamIp" placeholder="192.168.1.100" required class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 font-mono focus:outline-none focus:border-teal-500">
+          </div>
+          <div>
+            <label class="block text-slate-400 font-mono uppercase text-[10px] mb-1">Stream Path</label>
+            <input type="text" id="inputCamPath" value="/live/ch0" required class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 font-mono focus:outline-none focus:border-teal-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div>
+            <label class="block text-slate-400 font-mono uppercase text-[10px] mb-1">RTSP Username</label>
+            <input type="text" id="inputCamUser" value="admin" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 font-mono focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-slate-400 font-mono uppercase text-[10px] mb-1">RTSP Password</label>
+            <input type="text" id="inputCamPass" value="admin@123" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 font-mono focus:outline-none">
+          </div>
+        </div>
+
+        <div class="pt-4 flex justify-end gap-2">
+          <button type="button" onclick="closeCameraModal()" class="px-4 py-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-teal-600 text-white font-semibold rounded-xl">Save Camera</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div id="toastContainer" class="fixed bottom-16 md:bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
+
+  <!-- APPLICATION SCRIPT -->
+  <script>
+    let FIREBASE_URL = localStorage.getItem('visioncore_db_url') || "https://visioncore-46321-default-rtdb.firebaseio.com";
+    
+    let dbData = {
+      portal_users: {},
+      users: {},
+      cameras: {},
+      active_sessions: {},
+      user_activity: {},
+      remote_commands: {},
+      app_status: {}
+    };
+
+    let activityChart = null;
+    let rolesChart = null;
+    let autoSyncInterval = null;
+
+    const INACTIVITY_LIMIT = 3 * 60; // 180 seconds = 3 min
+    let inactivityTimerSeconds = INACTIVITY_LIMIT;
+    let inactivityInterval = null;
+
+    function sanitize(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function getActiveAuthSession() {
+      const activeUser = sessionStorage.getItem('visioncore_portal_auth_user');
+      const expireTime = sessionStorage.getItem('visioncore_session_expires_at');
+      
+      if (!activeUser || !expireTime) return null;
+      if (Date.now() > parseInt(expireTime, 10)) {
+        clearAuthSession();
+        return null;
+      }
+      return activeUser;
+    }
+
+    function setAuthSession(username) {
+      sessionStorage.setItem('visioncore_portal_auth_user', username);
+      refreshSessionExpiration();
+    }
+
+    function refreshSessionExpiration() {
+      const newExpire = Date.now() + (INACTIVITY_LIMIT * 1000);
+      sessionStorage.setItem('visioncore_session_expires_at', newExpire.toString());
+    }
+
+    function clearAuthSession() {
+      sessionStorage.removeItem('visioncore_portal_auth_user');
+      sessionStorage.removeItem('visioncore_session_expires_at');
+    }
+
+    window.onload = () => {
+      initTheme();
+      checkAuthSession();
+      setupInactivityTracker();
+    };
+
+    function setupInactivityTracker() {
+      const resetTimer = () => {
+        inactivityTimerSeconds = INACTIVITY_LIMIT;
+        refreshSessionExpiration();
+      };
+
+      window.addEventListener('mousemove', resetTimer);
+      window.addEventListener('keydown', resetTimer);
+      window.addEventListener('click', resetTimer);
+      window.addEventListener('scroll', resetTimer);
+      window.addEventListener('touchstart', resetTimer);
+
+      if (inactivityInterval) clearInterval(inactivityInterval);
+      inactivityInterval = setInterval(() => {
+        const activeSession = getActiveAuthSession();
+        if (activeSession) {
+          inactivityTimerSeconds--;
+
+          if (inactivityTimerSeconds <= 0) {
+            handleLogout();
+            showToast("Logged out due to 3 minutes of inactivity", "warn");
+          }
+        }
+      }, 1000);
+    }
+
+    function initTheme() {
+      const savedTheme = localStorage.getItem('visioncore_theme') || 'dark';
+      if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.getElementById('themeIcon').className = 'fa-solid fa-moon text-sm';
+        document.getElementById('themeLabel').innerText = 'Dark Mode';
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.getElementById('themeIcon').className = 'fa-solid fa-sun text-sm text-amber-500';
+        document.getElementById('themeLabel').innerText = 'Light Mode';
+      }
+    }
+
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('visioncore_theme', isDark ? 'dark' : 'light');
+      
+      document.getElementById('themeIcon').className = isDark ? 'fa-solid fa-moon text-sm' : 'fa-solid fa-sun text-sm text-amber-500';
+      document.getElementById('themeLabel').innerText = isDark ? 'Dark Mode' : 'Light Mode';
+      
+      if (activityChart) updateCharts();
+    }
+
+    function checkAuthSession() {
+      const activeSession = getActiveAuthSession();
+      const authOverlay = document.getElementById('authOverlay');
+      
+      if (activeSession) {
+        authOverlay.classList.add('hidden');
+        updateCurrentUserDisplay();
+        checkPortalUsersVisibility();
+        initDashboard();
+      } else {
+        authOverlay.classList.remove('hidden');
+        if (autoSyncInterval) clearInterval(autoSyncInterval);
+      }
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const user = document.getElementById('loginUser').value.trim();
+      const pass = document.getElementById('loginPass').value.trim();
+
+      if (!user || !pass) {
+        showToast("Please enter both username and password", "warn");
+        return;
+      }
+
+      setLoginLoading(true);
+
+      if (user === "Admin" && pass === "Admin@12108") {
+        setTimeout(() => {
+          setAuthSession(user);
+          showToast("Logged in as Administrator", "success");
+          document.getElementById('authOverlay').classList.add('hidden');
+          updateCurrentUserDisplay();
+          checkPortalUsersVisibility();
+          inactivityTimerSeconds = INACTIVITY_LIMIT;
+          setLoginLoading(false);
+          initDashboard();
+        }, 300);
+        return;
+      }
+
+      try {
+        const cleanUrl = FIREBASE_URL.replace(/\/$/, "");
+        const res = await fetch(`${cleanUrl}/portal_users.json`);
+        const portalUsers = await res.json() || {};
+
+        if (portalUsers[user] && portalUsers[user].password === pass && portalUsers[user].status === 'Active') {
+          setAuthSession(user);
+          showToast(`Welcome back, ${portalUsers[user].fullname || user}!`, "success");
+          document.getElementById('authOverlay').classList.add('hidden');
+          updateCurrentUserDisplay();
+          checkPortalUsersVisibility();
+          inactivityTimerSeconds = INACTIVITY_LIMIT;
+          initDashboard();
+        } else {
+          showToast("Invalid portal credentials or inactive account!", "error");
+        }
+      } catch (err) {
+        showToast("Authentication server connection error", "error");
+      } finally {
+        setLoginLoading(false);
+      }
+    }
+
+    function setLoginLoading(isLoading) {
+      const btn = document.getElementById('loginSubmitBtn');
+      const spinner = document.getElementById('loginBtnSpinner');
+      const text = document.getElementById('loginBtnText');
+
+      if (isLoading) {
+        btn.disabled = true;
+        spinner.classList.remove('hidden');
+        text.innerText = "Authenticating...";
+      } else {
+        btn.disabled = false;
+        spinner.classList.add('hidden');
+        text.innerText = "Sign In to Portal";
+      }
+    }
+
+    function handleLogout() {
+      clearAuthSession();
+      if (autoSyncInterval) clearInterval(autoSyncInterval);
+      document.getElementById('loginForm').reset();
+      document.getElementById('authOverlay').classList.remove('hidden');
+      
+      document.getElementById('nav-portalusers').classList.add('hidden');
+      const mobilePortalNav = document.getElementById('nav-mobile-portalusers');
+      if (mobilePortalNav) mobilePortalNav.classList.add('hidden');
+      document.getElementById('overviewPortalUserBtn').classList.add('hidden');
+      document.getElementById('nav-appmanagement-wrapper').classList.add('hidden');
+      document.getElementById('overviewAppControlBtn').classList.add('hidden');
+      
+      showToast("Logged out successfully", "info");
+    }
+
+    function initDashboard() {
+      initCharts();
+      fetchDataFromFirebase();
+      if (autoSyncInterval) clearInterval(autoSyncInterval);
+      autoSyncInterval = setInterval(() => fetchDataFromFirebase(true), 3000);
+    }
+
+    function toggleMobileSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.getElementById('mobileDrawerBackdrop');
+      
+      const isOpen = !sidebar.classList.contains('-translate-x-full');
+      if (isOpen) {
+        sidebar.classList.add('-translate-x-full');
+        backdrop.classList.add('hidden');
+      } else {
+        sidebar.classList.remove('-translate-x-full');
+        backdrop.classList.remove('hidden');
+      }
+    }
+
+    function switchTab(tabId) {
+      if (tabId === 'portalusers') {
+        const activeSession = getActiveAuthSession();
+        if (activeSession !== "Admin") {
+          showToast("Access Denied:Portal Accounts management is restricted to Admin", "error");
+          return;
+        }
+      }
+
+      if (tabId === 'appmanagement' && !canAccessAppControl()) {
+        showToast("Access Denied: You do not have App Block Rights", "error");
+        return;
+      }
+
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      
+      document.querySelectorAll('.nav-btn').forEach(el => {
+        el.classList.remove('text-teal-600', 'dark:text-teal-400', 'bg-teal-500/10', 'border', 'border-teal-500/20');
+        el.classList.add('text-slate-600', 'dark:text-slate-400');
+      });
+
+      const targetTab = document.getElementById(`tab-${tabId}`);
+      if (targetTab) targetTab.classList.remove('hidden');
+      
+      const activeNav = document.getElementById(`nav-${tabId}`);
+      if (activeNav) {
+        activeNav.classList.add('text-teal-600', 'dark:text-teal-400', 'bg-teal-500/10', 'border', 'border-teal-500/20');
+        activeNav.classList.remove('text-slate-600', 'dark:text-slate-400');
+      }
+
+      const sidebar = document.getElementById('sidebar');
+      if (!sidebar.classList.contains('-translate-x-full')) {
+        toggleMobileSidebar();
+      }
+    }
+
+    function canAccessAppControl() {
+      const currentUser = getActiveAuthSession();
+      if (currentUser === "Admin") return true;
+
+      const userData = dbData.portal_users && dbData.portal_users[currentUser];
+      return userData && (userData.appblock === 'Yes' || userData.appblock === '1');
+    }
+
+    function checkAppControlVisibility() {
+      const isAllowed = canAccessAppControl();
+      const navWrapper = document.getElementById('nav-appmanagement-wrapper');
+      const overviewBtn = document.getElementById('overviewAppControlBtn');
+
+      if (navWrapper) {
+        if (isAllowed) navWrapper.classList.remove('hidden');
+        else navWrapper.classList.add('hidden');
+      }
+
+      if (overviewBtn) {
+        if (isAllowed) overviewBtn.classList.remove('hidden');
+        else overviewBtn.classList.add('hidden');
+      }
+    }
+
+    function checkPortalUsersVisibility() {
+      const activeSession = getActiveAuthSession();
+      const isAdmin = (activeSession === "Admin");
+      
+      const navPortalUsers = document.getElementById('nav-portalusers');
+      const navMobilePortalUsers = document.getElementById('nav-mobile-portalusers');
+      const overviewPortalBtn = document.getElementById('overviewPortalUserBtn');
+
+      if (navPortalUsers) {
+        if (isAdmin) navPortalUsers.classList.remove('hidden');
+        else navPortalUsers.classList.add('hidden');
+      }
+
+      if (navMobilePortalUsers) {
+        if (isAdmin) navMobilePortalUsers.classList.remove('hidden');
+        else navMobilePortalUsers.classList.add('hidden');
+      }
+
+      if (overviewPortalBtn) {
+        if (isAdmin) overviewPortalBtn.classList.remove('hidden');
+        else overviewPortalBtn.classList.add('hidden');
+      }
+    }
+
+    function updateCurrentUserDisplay() {
+      const activeSession = getActiveAuthSession();
+      if (!activeSession) return;
+      let realName = activeSession;
+      if (activeSession === "Admin") {
+        realName = "Administrator";
+      } else if (dbData.portal_users && dbData.portal_users[activeSession] && dbData.portal_users[activeSession].fullname) {
+        realName = dbData.portal_users[activeSession].fullname;
+      } else if (dbData.users && dbData.users[activeSession] && dbData.users[activeSession].realname) {
+        realName = dbData.users[activeSession].realname;
+      }
+      const label = document.getElementById('sessionUserLabel');
+      if (label) label.innerText = sanitize(realName);
+      const headerLabel = document.getElementById('headerUserLabel');
+      if (headerLabel) headerLabel.innerText = sanitize(realName);
+    }
+
+    async function fetchDataFromFirebase(isSilent = false) {
+      const refreshIcon = document.getElementById('refreshIcon');
+      if (!isSilent && refreshIcon) refreshIcon.classList.add('fa-spin');
+
+      try {
+        const cleanUrl = FIREBASE_URL.replace(/\/$/, "");
+        const response = await fetch(`${cleanUrl}/.json`);
+        
+        if (!response.ok) throw new Error("HTTP Error " + response.status);
+
+        let data = await response.json();
+
+        dbData = {
+          portal_users: (data && data.portal_users) ? data.portal_users : {},
+          users: (data && data.users) ? data.users : {},
+          cameras: (data && data.cameras) ? data.cameras : {},
+          active_sessions: (data && data.active_sessions) ? data.active_sessions : {},
+          user_activity: (data && data.user_activity) ? data.user_activity : {},
+          remote_commands: (data && data.remote_commands) ? data.remote_commands : {},
+          app_status: (data && data.app_status) ? data.app_status : {}
+        };
+
+        updateUI();
+      } catch (err) {
+        console.error("Firebase Fetch Error:", err);
+        if (!isSilent) showToast("Sync failed: Check Firebase URL", "error");
+      } finally {
+        if (!isSilent && refreshIcon) refreshIcon.classList.remove('fa-spin');
+      }
+    }
+
+    async function writeFirebaseNode(path, value) {
+      try {
+        const cleanUrl = FIREBASE_URL.replace(/\/$/, "");
+        const response = await fetch(`${cleanUrl}/${path}.json`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(value)
+        });
+        if (!response.ok) throw new Error("Write failed");
+        fetchDataFromFirebase(true);
+        return true;
+      } catch (err) {
+        showToast("Error updating record: " + err.message, "error");
+        return false;
+      }
+    }
+
+    async function deleteFirebaseNode(path) {
+      try {
+        const cleanUrl = FIREBASE_URL.replace(/\/$/, "");
+        const response = await fetch(`${cleanUrl}/${path}.json`, {
+          method: 'DELETE'
+        });
+        if (!response.ok) throw new Error("Delete failed");
+        fetchDataFromFirebase(true);
+        return true;
+      } catch (err) {
+        showToast("Error deleting node: " + err.message, "error");
+        return false;
+      }
+    }
+
+    function updateUI() {
+      checkAppControlVisibility();
+      checkPortalUsersVisibility();
+      updateCurrentUserDisplay();
+      updateBadgesAndStats();
+      renderPortalUsers();
+      renderUsers();
+      renderAppManagement();
+      renderCameras();
+      renderSessions();
+      renderUserActivity();
+      updateCharts();
+    }
+
+    function updateBadgesAndStats() {
+      const portalUserKeys = Object.keys(dbData.portal_users);
+      const userKeys = Object.keys(dbData.users);
+      const camKeys = Object.keys(dbData.cameras);
+      const sessionKeys = Object.keys(dbData.active_sessions);
+      const activityKeys = Object.keys(dbData.user_activity);
+
+      document.getElementById('portalUserCountBadge').innerText = portalUserKeys.length;
+      document.getElementById('userCountBadge').innerText = userKeys.length;
+      document.getElementById('camCountBadge').innerText = camKeys.length;
+      document.getElementById('sessionCountBadge').innerText = sessionKeys.length;
+      document.getElementById('activityCountBadge').innerText = activityKeys.length;
+
+      document.getElementById('statTotalPortalUsers').innerText = portalUserKeys.length;
+      document.getElementById('statTotalCameras').innerText = camKeys.length;
+      document.getElementById('statActiveSessions').innerText = sessionKeys.length;
+      document.getElementById('statTotalLogs').innerText = activityKeys.length;
+    }
+
+    function renderPortalUsers() {
+      const tbody = document.getElementById('portalUserTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      const pUserEntries = Object.entries(dbData.portal_users);
+      if (pUserEntries.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400 font-mono">NoPortal Accounts created yet.</td></tr>`;
+        return;
+      }
+
+      pUserEntries.forEach(([username, user]) => {
+        if (!user) return;
+        const isActive = user.status === 'Active';
+        const isAppBlockRights = user.appblock === 'Yes' || user.appblock === '1';
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors";
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-bold text-slate-800 dark:text-slate-100 font-mono flex items-center gap-2">
+            <i class="fa-solid fa-id-card-clip text-indigo-500"></i> ${sanitize(username)}
+          </td>
+          <td class="py-3 px-4 font-mono text-slate-600 dark:text-slate-300">${sanitize(user.password || '')}</td>
+          <td class="py-3 px-4 text-slate-600 dark:text-slate-300">${sanitize(user.fullname || 'N/A')}</td>
+          <td class="py-3 px-4 text-center">
+            <button onclick="togglePortalAppBlockRights('${sanitize(username)}')" class="px-2 py-1 rounded-lg border text-[10px] font-semibold transition-all ${isAppBlockRights ? 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/30' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700'}">
+              ${isAppBlockRights ? 'Allowed' : 'Denied'}
+            </button>
+          </td>
+          <td class="py-3 px-4 text-center">
+            <button onclick="togglePortalUserStatus('${sanitize(username)}')" class="px-2.5 py-1 rounded-full text-[10px] font-bold transition-all ${isActive ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30'}">
+              ${isActive ? 'Active' : 'Inactive'}
+            </button>
+          </td>
+          <td class="py-3 px-4 text-right space-x-1">
+            <button onclick="openPortalUserModal('${sanitize(username)}')" class="p-1.5 hover:text-indigo-500 text-slate-400">
+              <i class="fa-solid fa-pen"></i>
+            </button>
+            <button onclick="deletePortalUser('${sanitize(username)}')" class="p-1.5 hover:text-rose-500 text-slate-400">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function openPortalUserModal(username = null) {
+      const modal = document.getElementById('portalUserModal');
+      const title = document.getElementById('portalUserModalTitle');
+      const usernameInput = document.getElementById('inputPortalUsername');
+
+      if (username && dbData.portal_users[username]) {
+        title.innerText = `Edit Portal User: ${username}`;
+        usernameInput.value = username;
+        usernameInput.readOnly = true;
+
+        const user = dbData.portal_users[username];
+        document.getElementById('inputPortalPassword').value = user.password || '';
+        document.getElementById('inputPortalFullname').value = user.fullname || '';
+        document.getElementById('inputPortalAppBlockRights').checked = user.appblock === 'Yes' || user.appblock === '1';
+        document.getElementById('inputPortalStatus').checked = user.status === 'Active';
+      } else {
+        title.innerText = "Add Portal User Account";
+        usernameInput.readOnly = false;
+        document.getElementById('portalUserForm').reset();
+      }
+      modal.classList.remove('hidden');
+    }
+
+    function closePortalUserModal() {
+      document.getElementById('portalUserModal').classList.add('hidden');
+    }
+
+    async function savePortalUser(e) {
+      e.preventDefault();
+      const username = document.getElementById('inputPortalUsername').value.trim();
+      if (!username) return;
+
+      const payload = {
+        password: document.getElementById('inputPortalPassword').value,
+        fullname: document.getElementById('inputPortalFullname').value,
+        appblock: document.getElementById('inputPortalAppBlockRights').checked ? 'Yes' : 'No',
+        status: document.getElementById('inputPortalStatus').checked ? 'Active' : 'Inactive'
+      };
+
+      await writeFirebaseNode(`portal_users/${username}`, payload);
+      showToast(`Portal User '${username}' saved`, "success");
+      closePortalUserModal();
+    }
+
+    async function togglePortalAppBlockRights(username) {
+      if (!dbData.portal_users[username]) return;
+      const current = dbData.portal_users[username].appblock;
+      const updated = (current === 'Yes' || current === '1') ? 'No' : 'Yes';
+      await writeFirebaseNode(`portal_users/${username}/appblock`, updated);
+      showToast(`App Block Rights for Portal User ${username} set to ${updated}`, "info");
+    }
+
+    async function togglePortalUserStatus(username) {
+      if (!dbData.portal_users[username]) return;
+      const current = dbData.portal_users[username].status;
+      const updated = current === 'Active' ? 'Inactive' : 'Active';
+      await writeFirebaseNode(`portal_users/${username}/status`, updated);
+      showToast(`Portal user ${username} set to ${updated}`, "info");
+    }
+
+    async function deletePortalUser(username) {
+      if (confirm(`Remove portal user '${username}'?`)) {
+        await deleteFirebaseNode(`portal_users/${username}`);
+        showToast(`Portal user ${username} removed`, "warn");
+      }
+    }
+
+    function renderUsers() {
+      const tbody = document.getElementById('userTableBody');
+      if (!tbody) return;
+      const search = document.getElementById('userSearch').value.toLowerCase();
+      const roleFilter = document.getElementById('userRoleFilter').value;
+
+      tbody.innerHTML = '';
+      const userEntries = Object.entries(dbData.users);
+
+      if (userEntries.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400 font-mono">No Application Users found.</td></tr>`;
+        return;
+      }
+
+      userEntries.forEach(([username, user]) => {
+        if (!user) return;
+        if (roleFilter !== 'ALL' && user.role !== roleFilter) return;
+        
+        const matchSearch = username.toLowerCase().includes(search) || 
+                            (user.realname && user.realname.toLowerCase().includes(search));
+        if (!matchSearch) return;
+
+        const isCamRights = user.camrights === 'Yes' || user.camrights === '1';
+        const isActive = user.status === 'Active';
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors";
+        tr.innerHTML = `
+          <td class="py-3 px-4">
+            <div class="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              <i class="fa-solid fa-user-shield text-slate-400"></i>
+              <span>${sanitize(username)}</span>
+            </div>
+            <div class="text-[11px] text-slate-500 font-sans">${sanitize(user.realname || 'N/A')} • Pass: <span class="font-mono">${sanitize(user.password || '')}</span></div>
+          </td>
+          <td class="py-3 px-4">
+            <span class="px-2 py-0.5 text-[10px] rounded-full border ${user.role === 'Admin' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'}">
+              ${sanitize(user.role || 'Operator')}
+            </span>
+          </td>
+          <td class="py-3 px-4 font-mono text-[11px] text-slate-600 dark:text-slate-300">
+            ${sanitize(user.allowedpc || 'ALL')}
+          </td>
+          <td class="py-3 px-4 text-center">
+            <button onclick="toggleCamRights('${sanitize(username)}')" class="px-2 py-1 rounded-lg border text-[10px] font-semibold transition-all ${isCamRights ? 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/30' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700'}">
+              ${isCamRights ? 'Yes' : 'No'}
+            </button>
+          </td>
+          <td class="py-3 px-4 text-center">
+            <button onclick="toggleUserStatus('${sanitize(username)}')" class="px-2.5 py-1 rounded-full text-[10px] font-bold transition-all ${isActive ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30'}">
+              ${isActive ? 'Active' : 'Inactive'}
+            </button>
+          </td>
+          <td class="py-3 px-4 text-right space-x-1">
+            <button onclick="openUserModal('${sanitize(username)}')" class="p-1.5 hover:text-teal-500 text-slate-400 transition-colors" title="Edit">
+              <i class="fa-solid fa-pen"></i>
+            </button>
+            <button onclick="deleteUser('${sanitize(username)}')" class="p-1.5 hover:text-rose-500 text-slate-400 transition-colors" title="Delete">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderAppManagement() {
+      const isBlocked = dbData.app_status && dbData.app_status.status === 'false';
+      const statusLabel = document.getElementById('appStatusLabel');
+      const statusBtn = document.getElementById('appStatusBtn');
+      
+      const navDot = document.getElementById('appStatusNavDot');
+      const overviewDot = document.getElementById('appStatusOverviewDot');
+      const mainDot = document.getElementById('appStatusMainDot');
+
+      const activeColor = "bg-emerald-500";
+      const blockedColor = "bg-rose-500";
+
+      [navDot, overviewDot, mainDot].forEach(dot => {
+        if (dot) {
+          dot.className = `w-2.5 h-2.5 rounded-full inline-block ${isBlocked ? blockedColor : activeColor} shadow-sm`;
+        }
+      });
+
+      if (statusLabel && statusBtn) {
+        if (isBlocked) {
+          statusLabel.innerText = "BLOCKED / INVALID";
+          statusLabel.className = "text-lg font-bold font-mono text-rose-500";
+          statusBtn.innerText = "Set App Status to Active";
+          statusBtn.className = "w-full sm:w-auto px-5 py-2.5 rounded-xl font-bold text-xs bg-emerald-500 hover:bg-emerald-600 text-white transition-all shadow-md shadow-emerald-500/20";
+        } else {
+          statusLabel.innerText = "ACTIVE";
+          statusLabel.className = "text-lg font-bold font-mono text-emerald-500";
+          statusBtn.innerText = "Block Application Access";
+          statusBtn.className = "w-full sm:w-auto px-5 py-2.5 rounded-xl font-bold text-xs bg-rose-500 hover:bg-rose-600 text-white transition-all shadow-md shadow-rose-500/20";
+        }
+      }
+    }
+
+    async function toggleAppGlobalStatus() {
+      if (!canAccessAppControl()) {
+        showToast("Access Denied: You do not have App Block Rights", "error");
+        return;
+      }
+
+      const isBlocked = dbData.app_status && dbData.app_status.status === 'false';
+      const newStatus = isBlocked ? "true" : "false";
+
+      if (confirm(`Are you sure you want to change Application Global Status to '${newStatus === 'true' ? 'Active' : 'Blocked'}'?`)) {
+        await writeFirebaseNode('app_status/status', newStatus);
+        showToast(`App Status changed to ${newStatus === 'true' ? 'Active' : 'Blocked'}`, "warn");
+      }
+    }
+
+    async function toggleUserStatus(username) {
+      if (!dbData.users[username]) return;
+      const current = dbData.users[username].status;
+      const updated = current === 'Active' ? 'Inactive' : 'Active';
+      await writeFirebaseNode(`users/${username}/status`, updated);
+      showToast(`User ${username} set to ${updated}`, "info");
+    }
+
+    async function toggleCamRights(username) {
+      if (!dbData.users[username]) return;
+      const current = dbData.users[username].camrights;
+      const updated = (current === 'Yes' || current === '1') ? 'No' : 'Yes';
+      await writeFirebaseNode(`users/${username}/camrights`, updated);
+      showToast(`Camera Rights for ${username} set to ${updated}`, "info");
+    }
+
+    function openUserModal(username = null) {
+      const modal = document.getElementById('userModal');
+      const title = document.getElementById('userModalTitle');
+      const usernameInput = document.getElementById('inputUsername');
+
+      if (username && dbData.users[username]) {
+        title.innerText = `Edit User: ${username}`;
+        usernameInput.value = username;
+        usernameInput.readOnly = true;
+        
+        const user = dbData.users[username];
+        document.getElementById('inputPassword').value = user.password || '';
+        document.getElementById('inputRealname').value = user.realname || '';
+        document.getElementById('inputRole').value = user.role || 'Operator';
+        document.getElementById('inputAllowedPc').value = user.allowedpc || 'ALL';
+        document.getElementById('inputCamRights').checked = user.camrights === 'Yes' || user.camrights === '1';
+        document.getElementById('inputStatus').checked = user.status === 'Active';
+      } else {
+        title.innerText = "Create New Application User";
+        usernameInput.readOnly = false;
+        document.getElementById('userForm').reset();
+      }
+      modal.classList.remove('hidden');
+    }
+
+    function closeUserModal() {
+      document.getElementById('userModal').classList.add('hidden');
+    }
+
+    async function saveUser(e) {
+      e.preventDefault();
+      const username = document.getElementById('inputUsername').value.trim();
+      if (!username) return;
+
+      const payload = {
+        password: document.getElementById('inputPassword').value,
+        realname: document.getElementById('inputRealname').value,
+        role: document.getElementById('inputRole').value,
+        allowedpc: document.getElementById('inputAllowedPc').value,
+        camrights: document.getElementById('inputCamRights').checked ? 'Yes' : 'No',
+        status: document.getElementById('inputStatus').checked ? 'Active' : 'Inactive',
+        lastactive: dbData.users[username]?.lastactive || "Never",
+        lastpc: dbData.users[username]?.lastpc || "Unknown"
+      };
+
+      await writeFirebaseNode(`users/${username}`, payload);
+      showToast(`User Account '${username}' saved`, "success");
+      closeUserModal();
+    }
+
+    async function deleteUser(username) {
+      if (confirm(`Are you sure you want to delete user '${username}'?`)) {
+        await deleteFirebaseNode(`users/${username}`);
+        showToast(`User ${username} deleted`, "warn");
+      }
+    }
+
+    function renderCameras() {
+      const grid = document.getElementById('cameraCardsGrid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      const camEntries = Object.entries(dbData.cameras);
+      if (camEntries.length === 0) {
+        grid.innerHTML = `<div class="col-span-full text-center py-12 text-slate-400 font-mono">No cameras registered on server.</div>`;
+        return;
+      }
+
+      camEntries.forEach(([camId, cam]) => {
+        if (!cam) return;
+        const rtspUrl = `rtsp://${cam.username || 'admin'}:${cam.password || '***'}@${cam.ip_address || '127.0.0.1'}:554${cam.stream_path || '/live/ch0'}`;
+
+        const card = document.createElement('div');
+        card.className = "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex flex-col justify-between space-y-3 shadow-sm";
+        card.innerHTML = `
+          <div class="flex items-start justify-between">
+            <div class="flex items-center gap-3">
+              <div class="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center text-lg">
+                <i class="fa-solid fa-video"></i>
+              </div>
+              <div>
+                <h4 class="font-bold text-slate-800 dark:text-slate-100 text-sm">${sanitize(cam.cam_name || camId)}</h4>
+                <p class="text-[11px] font-mono text-slate-400">${sanitize(cam.ip_address || 'N/A')}</p>
+              </div>
+            </div>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+              ${sanitize(camId)}
+            </span>
+          </div>
+
+          <div class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 font-mono text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
+            <span class="truncate mr-2">${sanitize(rtspUrl)}</span>
+            <button onclick="navigator.clipboard.writeText('${sanitize(rtspUrl)}'); showToast('RTSP URL Copied!', 'info');" class="hover:text-teal-500 shrink-0">
+              <i class="fa-solid fa-copy"></i>
+            </button>
+          </div>
+
+          <div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+            <span class="text-slate-400 text-[11px]">Server Configured</span>
+            <div class="flex gap-2">
+              <button onclick="openCameraModal('${sanitize(camId)}')" class="p-1.5 hover:text-teal-500 text-slate-400">
+                <i class="fa-solid fa-pen"></i>
+              </button>
+              <button onclick="deleteCamera('${sanitize(camId)}')" class="p-1.5 hover:text-rose-500 text-slate-400">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function openCameraModal(camId = null) {
+      const modal = document.getElementById('cameraModal');
+      const title = document.getElementById('cameraModalTitle');
+      const idInput = document.getElementById('inputCamId');
+
+      if (camId && dbData.cameras[camId]) {
+        title.innerText = `Edit Camera: ${camId}`;
+        idInput.value = camId;
+        idInput.readOnly = true;
+
+        const cam = dbData.cameras[camId];
+        document.getElementById('inputCamName').value = cam.cam_name || '';
+        document.getElementById('inputCamIp').value = cam.ip_address || '';
+        document.getElementById('inputCamPath').value = cam.stream_path || '/live/ch0';
+        document.getElementById('inputCamUser').value = cam.username || 'admin';
+        document.getElementById('inputCamPass').value = cam.password || '';
+      } else {
+        title.innerText = "Register CCTV Camera Endpoint";
+        idInput.readOnly = false;
+        document.getElementById('cameraForm').reset();
+      }
+      modal.classList.remove('hidden');
+    }
+
+    function closeCameraModal() {
+      document.getElementById('cameraModal').classList.add('hidden');
+    }
+
+    async function saveCamera(e) {
+      e.preventDefault();
+      const camId = document.getElementById('inputCamId').value.trim();
+      if (!camId) return;
+
+      const payload = {
+        cam_name: document.getElementById('inputCamName').value,
+        ip_address: document.getElementById('inputCamIp').value,
+        stream_path: document.getElementById('inputCamPath').value,
+        username: document.getElementById('inputCamUser').value,
+        password: document.getElementById('inputCamPass').value
+      };
+
+      await writeFirebaseNode(`cameras/${camId}`, payload);
+      showToast(`Camera '${camId}' saved on Firebase`, "success");
+      closeCameraModal();
+    }
+
+    async function deleteCamera(camId) {
+      if (confirm(`Remove camera ${camId} from Firebase database?`)) {
+        await deleteFirebaseNode(`cameras/${camId}`);
+        showToast(`Camera ${camId} removed`, "warn");
+      }
+    }
+
+    function renderSessions() {
+      const tbody = document.getElementById('sessionTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      const sessionEntries = Object.entries(dbData.active_sessions);
+      if (sessionEntries.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400 font-mono">No active workstation sessions.</td></tr>`;
+        return;
+      }
+
+      sessionEntries.forEach(([pcName, session]) => {
+        if (!session) return;
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors";
+        
+        const activeCmd = dbData.remote_commands && dbData.remote_commands[pcName]?.command;
+        const isStopSet = activeCmd === 'stop';
+        const isUninstallSet = activeCmd === 'uninstall';
+
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-bold text-slate-800 dark:text-slate-100 font-mono">
+            <i class="fa-solid fa-desktop text-emerald-500 mr-2"></i>${sanitize(pcName)}
+          </td>
+          <td class="py-3 px-4 font-mono text-slate-600 dark:text-slate-300 text-[11px]">${sanitize(session.ip || 'N/A')}</td>
+          <td class="py-3 px-4 font-medium text-teal-600 dark:text-teal-400">${sanitize(session.user || 'Unknown')}</td>
+          <td class="py-3 px-4 font-mono text-slate-500 text-[11px]">${sanitize(session.usertype || 'Operator')}</td>
+          <td class="py-3 px-4 font-mono text-slate-400 text-[11px]">${sanitize(session.logintime || 'N/A')}</td>
+          <td class="py-3 px-4 text-right space-x-1 sm:space-x-2">
+            <button onclick="sendRemoteCommand('${sanitize(pcName)}', 'stop')" class="px-2 sm:px-2.5 py-1.5 rounded-xl text-[11px] sm:text-xs font-semibold border transition-all ${isStopSet ? 'bg-rose-600 text-white border-rose-600 animate-pulse' : 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border-rose-500/20'}">
+              <i class="fa-solid fa-power-off sm:mr-1"></i> <span class="hidden sm:inline">${isStopSet ? 'Killing App...' : 'Kill App'}</span>
+            </button>
+            <button onclick="sendRemoteCommand('${sanitize(pcName)}', 'uninstall')" class="px-2 sm:px-2.5 py-1.5 rounded-xl text-[11px] sm:text-xs font-semibold border transition-all ${isUninstallSet ? 'bg-amber-600 text-white border-amber-600 animate-pulse' : 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/20'}">
+              <i class="fa-solid fa-trash-can sm:mr-1"></i> <span class="hidden sm:inline">${isUninstallSet ? 'Uninstalling...' : 'Uninstall'}</span>
+            </button>
+            <button onclick="forceRemoveSession('${sanitize(pcName)}')" class="px-2 py-1.5 rounded-xl text-[11px] sm:text-xs font-semibold border bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 border-slate-300 dark:border-slate-700" title="Force Clear Session Entry">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function sendRemoteCommand(pcName, commandType) {
+      const currentCmd = dbData.remote_commands && dbData.remote_commands[pcName]?.command;
+      
+      if (currentCmd === commandType) {
+        await deleteFirebaseNode(`remote_commands/${pcName}`);
+        showToast(`Cancelled ${commandType} command for ${pcName}`, "info");
+      } else {
+        if (confirm(`Send Remote ${commandType.toUpperCase()} command to PC: ${pcName}?`)) {
+          await writeFirebaseNode(`remote_commands/${pcName}`, { command: commandType });
+          showToast(`${commandType.toUpperCase()} command sent to ${pcName}`, "warn");
+        }
+      }
+    }
+
+    async function forceRemoveSession(pcName) {
+      if (confirm(`Forcefully remove '${pcName}' from Active Sessions list?`)) {
+        await deleteFirebaseNode(`active_sessions/${pcName}`);
+        showToast(`Session entry for ${pcName} cleared`, "info");
+      }
+    }
+
+    function renderUserActivity() {
+      const tbody = document.getElementById('activityTableBody');
+      if (!tbody) return;
+      const search = document.getElementById('activitySearch').value.toLowerCase();
+      tbody.innerHTML = '';
+
+      const actEntries = Object.entries(dbData.user_activity).reverse();
+      if (actEntries.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-slate-400 font-mono">No user activity records available.</td></tr>`;
+        return;
+      }
+
+      actEntries.forEach(([key, act]) => {
+        if (!act) return;
+        const user = act.user || '';
+        const pc = act.pc || '';
+        const time = act.time || '';
+        const ip = act.ip || 'N/A';
+        const type = act.type || 'Operator';
+
+        const matchSearch = user.toLowerCase().includes(search) ||
+                            pc.toLowerCase().includes(search) ||
+                            ip.toLowerCase().includes(search) ||
+                            type.toLowerCase().includes(search);
+        if (!matchSearch) return;
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors";
+        tr.innerHTML = `
+          <td class="py-3 px-4 text-slate-400">${sanitize(time || key)}</td>
+          <td class="py-3 px-4 font-bold text-teal-600 dark:text-teal-400">${sanitize(user || 'Unknown')}</td>
+          <td class="py-3 px-4 text-slate-600 dark:text-slate-300">${sanitize(pc || 'N/A')}</td>
+          <td class="py-3 px-4 font-mono text-slate-500 dark:text-slate-400 text-[11px]">${sanitize(ip)}</td>
+          <td class="py-3 px-4 text-slate-500 font-mono text-[11px]">${sanitize(type)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function clearUserActivities() {
+      if (confirm("Are you sure you want to clear all records under /user_activity?")) {
+        await deleteFirebaseNode('user_activity');
+        showToast("User activity logs cleared", "info");
+      }
+    }
+
+    function initCharts() {
+      const isDark = document.documentElement.classList.contains('dark');
+      const gridColor = isDark ? '#1e293b' : '#e2e8f0';
+      const textColor = isDark ? '#64748b' : '#94a3b8';
+
+      const canvas1 = document.getElementById('activityChart');
+      if (canvas1) {
+        const ctx1 = canvas1.getContext('2d');
+        activityChart = new Chart(ctx1, {
+          type: 'line',
+          data: {
+            labels: ['12 AM', '04 AM', '08 AM', '12 PM', '04 PM', '08 PM', 'Now'],
+            datasets: [{
+              label: 'User Activity Logins',
+              data: [0, 0, 0, 0, 0, 0, 0],
+              borderColor: '#0d9488',
+              backgroundColor: 'rgba(13, 148, 136, 0.1)',
+              fill: true,
+              tension: 0.4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { grid: { color: gridColor }, ticks: { color: textColor } },
+              y: { grid: { color: gridColor }, ticks: { color: textColor } }
+            }
+          }
+        });
+      }
+
+      const canvas2 = document.getElementById('rolesChart');
+      if (canvas2) {
+        const ctx2 = canvas2.getContext('2d');
+        rolesChart = new Chart(ctx2, {
+          type: 'doughnut',
+          data: {
+            labels: ['Admins', 'Operators'],
+            datasets: [{
+              data: [0, 0],
+              backgroundColor: ['#0d9488', '#64748b'],
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            cutout: '75%'
+          }
+        });
+      }
+    }
+
+    function updateCharts() {
+      if (!rolesChart || !activityChart) return;
+
+      const isDark = document.documentElement.classList.contains('dark');
+      const gridColor = isDark ? '#1e293b' : '#e2e8f0';
+      const textColor = isDark ? '#64748b' : '#94a3b8';
+
+      activityChart.options.scales.x.grid.color = gridColor;
+      activityChart.options.scales.x.ticks.color = textColor;
+      activityChart.options.scales.y.grid.color = gridColor;
+      activityChart.options.scales.y.ticks.color = textColor;
+
+      const userKeys = Object.keys(dbData.users);
+      const adminCount = userKeys.filter(k => dbData.users[k] && dbData.users[k].role === 'Admin').length;
+      const opCount = userKeys.filter(k => dbData.users[k] && dbData.users[k].role === 'Operator').length;
+
+      document.getElementById('roleAdminCount').innerText = adminCount;
+      document.getElementById('roleOpCount').innerText = opCount;
+
+      rolesChart.data.datasets[0].data = [adminCount, opCount];
+      rolesChart.update();
+
+      const actCount = Object.keys(dbData.user_activity).length;
+      activityChart.data.datasets[0].data = [0, 0, Math.floor(actCount*0.2), Math.floor(actCount*0.5), Math.floor(actCount*0.8), actCount, actCount];
+      activityChart.update();
+    }
+
+    // Config modal functions kept intact internally incase required programmatically
+    function openConfigModal() {
+      document.getElementById('inputDbUrl').value = FIREBASE_URL;
+      document.getElementById('configModal').classList.remove('hidden');
+    }
+
+    function closeConfigModal() {
+      document.getElementById('configModal').classList.add('hidden');
+    }
+
+    function saveConfigModal() {
+      const url = document.getElementById('inputDbUrl').value.trim();
+      if (url) {
+        FIREBASE_URL = url;
+        localStorage.setItem('visioncore_db_url', url);
+        fetchDataFromFirebase();
+        showToast("Firebase Database URL Updated", "success");
+        closeConfigModal();
+      }
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      if (!container) return;
+      const toast = document.createElement('div');
+
+      const colors = {
+        success: 'bg-emerald-900/90 text-emerald-100 border-emerald-500/50',
+        error: 'bg-rose-900/90 text-rose-100 border-rose-500/50',
+        warn: 'bg-amber-900/90 text-amber-100 border-amber-500/50',
+        info: 'bg-slate-900/90 text-teal-200 border-teal-500/50'
+      };
+
+      toast.className = `px-4 py-3 rounded-xl border backdrop-blur shadow-2xl text-xs font-semibold flex items-center gap-3 transition-all duration-300 transform translate-y-2 opacity-0 pointer-events-auto ${colors[type] || colors.info}`;
+      toast.innerHTML = `
+        <i class="fa-solid fa-bell text-sm"></i>
+        <span>${sanitize(message)}</span>
+      `;
+
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      }, 10);
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+  </script>
+</body>
+</html>
