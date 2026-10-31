@@ -100,7 +100,6 @@
     <!-- Header -->
     <header class="h-16 border-b border-slate-200 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/90 backdrop-blur px-3 sm:px-6 flex items-center justify-between z-20 shrink-0">
       <div class="flex items-center gap-2 sm:gap-3">
-        <!-- 3 lines button hidden on mobile, visible on desktop -->
         <button onclick="toggleMobileSidebar()" class="hidden md:flex text-slate-600 dark:text-slate-300 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
           <i class="fa-solid fa-bars text-lg"></i>
         </button>
@@ -119,21 +118,21 @@
       </div>
 
       <div class="flex items-center gap-1.5 sm:gap-3">
-        <!-- Theme Toggle Button -->
+        <button onclick="openChangePasswordModal()" class="p-2 sm:px-3 sm:py-1.5 rounded-xl border border-indigo-500/30 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 transition-colors flex items-center gap-1.5 text-xs font-semibold" title="Change Password">
+          <i class="fa-solid fa-key text-xs"></i>
+          <span class="hidden sm:inline">Change Pass</span>
+        </button>
+
         <button onclick="toggleTheme()" class="p-2 sm:px-3 sm:py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-300 hover:text-teal-500 transition-colors flex items-center gap-2 text-xs font-semibold">
           <i id="themeIcon" class="fa-solid fa-moon text-sm"></i>
           <span class="hidden sm:inline" id="themeLabel">Dark Mode</span>
         </button>
 
-        <!-- Sync Button -->
         <button onclick="fetchDataFromFirebase()" class="bg-teal-600/10 dark:bg-teal-600/20 border border-teal-500/30 text-teal-700 dark:text-teal-300 hover:bg-teal-600/20 p-2 sm:px-3 sm:py-1.5 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all">
           <i class="fa-solid fa-rotate" id="refreshIcon"></i>
           <span class="hidden sm:inline">Sync</span>
         </button>
 
-        <!-- Config Gear Button (Removed from both mobile and PC mode) -->
-
-        <!-- Logout Button (Always Visible in Header) -->
         <button onclick="handleLogout()" class="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 text-xs font-semibold flex items-center gap-1.5" title="Logout">
           <i class="fa-solid fa-right-from-bracket"></i>
           <span class="hidden sm:inline">Logout</span>
@@ -338,11 +337,11 @@
           </div>
         </section>
 
-        <!--Portal Accounts TAB -->
+        <!-- PORTAL ACCOUNTS TAB -->
         <section id="tab-portalusers" class="tab-content hidden space-y-4">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-sm">
             <div>
-              <h3 class="font-bold text-slate-800 dark:text-slate-200 text-sm">Portal Accounts management </h3>
+              <h3 class="font-bold text-slate-800 dark:text-slate-200 text-sm">Portal Accounts Management</h3>
               <p class="text-xs text-slate-400">Separate logins specifically to access this web portal on Mobile or PC</p>
             </div>
             <button onclick="openPortalUserModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-indigo-600/20">
@@ -437,11 +436,11 @@
         <!-- CAMERAS TAB -->
         <section id="tab-cameras" class="tab-content hidden space-y-4">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-sm">
-            <div>
-              <h3 class="font-bold text-slate-800 dark:text-slate-200 text-sm">Server Camera Endpoints</h3>
-              <p class="text-xs text-slate-400">Manage CCTV cameras saved on Firebase</p>
+            <div class="relative flex-1">
+              <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+              <input type="text" id="cameraSearch" onkeyup="renderCameras()" placeholder="Search cameras by name, ID, or IP address..." class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs rounded-xl pl-9 pr-3 py-2.5 focus:outline-none focus:border-teal-500">
             </div>
-            <button onclick="openCameraModal()" class="bg-teal-600 hover:bg-teal-500 text-white font-semibold text-xs px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-teal-600/20">
+            <button onclick="openCameraModal()" class="bg-teal-600 hover:bg-teal-500 text-white font-semibold text-xs px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-teal-600/20 shrink-0">
               <i class="fa-solid fa-plus"></i>
               <span>Add Camera</span>
             </button>
@@ -450,7 +449,7 @@
           <div id="cameraCardsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </section>
 
-        <!-- ACTIVE SESSIONS TAB WITH KILL & UNINSTALL -->
+        <!-- ACTIVE SESSIONS TAB -->
         <section id="tab-sessions" class="tab-content hidden space-y-4">
           <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl flex items-center justify-between shadow-sm">
             <div>
@@ -590,7 +589,36 @@
     </div>
   </div>
 
-  <!-- Application User MODAL -->
+  <!-- CHANGE PASSWORD MODAL (SELF-SERVICE) -->
+  <div id="changePasswordModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-md p-5 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
+        <h3 class="font-bold text-slate-800 dark:text-slate-100 text-sm flex items-center gap-2">
+          <i class="fa-solid fa-key text-indigo-500"></i> Change Account Password
+        </h3>
+        <button onclick="closeChangePasswordModal()" class="text-slate-400 p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <form id="changePasswordForm" onsubmit="saveNewPassword(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-400 font-mono uppercase text-[10px] mb-1">New Password</label>
+          <input type="password" id="inputNewPass" placeholder="Enter new password" required class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 font-mono focus:outline-none focus:border-indigo-500">
+        </div>
+
+        <div>
+          <label class="block text-slate-400 font-mono uppercase text-[10px] mb-1">Confirm New Password</label>
+          <input type="password" id="inputConfirmPass" placeholder="Re-enter new password" required class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 font-mono focus:outline-none focus:border-indigo-500">
+        </div>
+
+        <div class="pt-4 flex justify-end gap-2">
+          <button type="button" onclick="closeChangePasswordModal()" class="px-4 py-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl">Update Password</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- APPLICATION USER MODAL -->
   <div id="userModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-md p-5 shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
@@ -686,7 +714,7 @@
           </div>
           <div>
             <label class="block text-slate-400 font-mono uppercase text-[10px] mb-1">RTSP Password</label>
-            <input type="text" id="inputCamPass" value="admin@123" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 font-mono focus:outline-none">
+            <input type="text" id="inputCamPass" value="" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 font-mono focus:outline-none">
           </div>
         </div>
 
@@ -706,6 +734,7 @@
     let FIREBASE_URL = localStorage.getItem('visioncore_db_url') || "https://visioncore-46321-default-rtdb.firebaseio.com";
     
     let dbData = {
+      admin: {},
       portal_users: {},
       users: {},
       cameras: {},
@@ -714,6 +743,8 @@
       remote_commands: {},
       app_status: {}
     };
+
+    let visiblePasswords = {};
 
     let activityChart = null;
     let rolesChart = null;
@@ -842,38 +873,47 @@
 
       setLoginLoading(true);
 
-      if (user === "Admin" && pass === "Admin@12108") {
-        setTimeout(() => {
-          setAuthSession(user);
-          showToast("Logged in as Administrator", "success");
-          document.getElementById('authOverlay').classList.add('hidden');
-          updateCurrentUserDisplay();
-          checkPortalUsersVisibility();
-          inactivityTimerSeconds = INACTIVITY_LIMIT;
-          setLoginLoading(false);
-          initDashboard();
-        }, 300);
-        return;
-      }
-
       try {
         const cleanUrl = FIREBASE_URL.replace(/\/$/, "");
-        const res = await fetch(`${cleanUrl}/portal_users.json`);
-        const portalUsers = await res.json() || {};
 
-        if (portalUsers[user] && portalUsers[user].password === pass && portalUsers[user].status === 'Active') {
-          setAuthSession(user);
-          showToast(`Welcome back, ${portalUsers[user].fullname || user}!`, "success");
+        // Fetch Admin node and portal_users node independently
+        const [adminRes, portalRes] = await Promise.all([
+          fetch(`${cleanUrl}/Admin.json`),
+          fetch(`${cleanUrl}/portal_users.json`)
+        ]);
+
+        const adminData = await adminRes.json() || {};
+        const portalUsers = await portalRes.json() || {};
+
+        let isValid = false;
+        let sessionUser = "";
+
+        // Check Admin node
+        if (user.toLowerCase() === "admin") {
+          if (adminData.pass === pass || adminData.password === pass) {
+            isValid = true;
+            sessionUser = "Admin";
+          }
+        } 
+        // Check portal_users node
+        else if (portalUsers[user] && portalUsers[user].password === pass && portalUsers[user].status === 'Active') {
+          isValid = true;
+          sessionUser = user;
+        }
+
+        if (isValid) {
+          setAuthSession(sessionUser);
+          showToast(`Welcome back, ${sessionUser === 'Admin' ? 'Administrator' : (portalUsers[user]?.fullname || user)}!`, "success");
           document.getElementById('authOverlay').classList.add('hidden');
           updateCurrentUserDisplay();
           checkPortalUsersVisibility();
           inactivityTimerSeconds = INACTIVITY_LIMIT;
           initDashboard();
         } else {
-          showToast("Invalid portal credentials or inactive account!", "error");
+          showToast("Invalid credentials or inactive portal account!", "error");
         }
       } catch (err) {
-        showToast("Authentication server connection error", "error");
+        showToast("Authentication error: Check database connectivity", "error");
       } finally {
         setLoginLoading(false);
       }
@@ -936,7 +976,7 @@
       if (tabId === 'portalusers') {
         const activeSession = getActiveAuthSession();
         if (activeSession !== "Admin") {
-          showToast("Access Denied:Portal Accounts management is restricted to Admin", "error");
+          showToast("Access Denied: Portal Accounts management is restricted to Admin", "error");
           return;
         }
       }
@@ -1021,7 +1061,7 @@
       if (!activeSession) return;
       let realName = activeSession;
       if (activeSession === "Admin") {
-        realName = "Administrator";
+        realName = dbData.admin?.fullname || "Administrator";
       } else if (dbData.portal_users && dbData.portal_users[activeSession] && dbData.portal_users[activeSession].fullname) {
         realName = dbData.portal_users[activeSession].fullname;
       } else if (dbData.users && dbData.users[activeSession] && dbData.users[activeSession].realname) {
@@ -1046,6 +1086,7 @@
         let data = await response.json();
 
         dbData = {
+          admin: (data && data.Admin) ? data.Admin : {},
           portal_users: (data && data.portal_users) ? data.portal_users : {},
           users: (data && data.users) ? data.users : {},
           cameras: (data && data.cameras) ? data.cameras : {},
@@ -1111,7 +1152,8 @@
     }
 
     function updateBadgesAndStats() {
-      const portalUserKeys = Object.keys(dbData.portal_users);
+      // Exclude Admin key if present in portal_users accidentally
+      const portalUserKeys = Object.keys(dbData.portal_users).filter(k => k.toLowerCase() !== "admin");
       const userKeys = Object.keys(dbData.users);
       const camKeys = Object.keys(dbData.cameras);
       const sessionKeys = Object.keys(dbData.active_sessions);
@@ -1134,16 +1176,25 @@
       if (!tbody) return;
       tbody.innerHTML = '';
 
-      const pUserEntries = Object.entries(dbData.portal_users);
+      // Strict filter: Exclude Admin from portal_users list rendering
+      const pUserEntries = Object.entries(dbData.portal_users).filter(([username]) => username.toLowerCase() !== 'admin');
+
       if (pUserEntries.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400 font-mono">NoPortal Accounts created yet.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400 font-mono">No Portal Accounts created yet.</td></tr>`;
         return;
       }
+
+      const activeSession = getActiveAuthSession();
+      const isAdminSession = (activeSession === "Admin");
 
       pUserEntries.forEach(([username, user]) => {
         if (!user) return;
         const isActive = user.status === 'Active';
         const isAppBlockRights = user.appblock === 'Yes' || user.appblock === '1';
+
+        const isPassRevealed = visiblePasswords[`portal_${username}`];
+        const rawPass = user.password || '';
+        const displayPass = isPassRevealed ? sanitize(rawPass) : '••••••••';
 
         const tr = document.createElement('tr');
         tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors";
@@ -1151,7 +1202,16 @@
           <td class="py-3 px-4 font-bold text-slate-800 dark:text-slate-100 font-mono flex items-center gap-2">
             <i class="fa-solid fa-id-card-clip text-indigo-500"></i> ${sanitize(username)}
           </td>
-          <td class="py-3 px-4 font-mono text-slate-600 dark:text-slate-300">${sanitize(user.password || '')}</td>
+          <td class="py-3 px-4 font-mono text-slate-600 dark:text-slate-300">
+            <div class="flex items-center gap-2">
+              <span>${displayPass}</span>
+              ${isAdminSession ? `
+                <button onclick="togglePasswordVisibility('portal_${sanitize(username)}')" class="text-slate-400 hover:text-indigo-500 text-xs">
+                  <i class="fa-solid ${isPassRevealed ? 'fa-eye-slash' : 'fa-eye'}"></i>
+                </button>
+              ` : ''}
+            </div>
+          </td>
           <td class="py-3 px-4 text-slate-600 dark:text-slate-300">${sanitize(user.fullname || 'N/A')}</td>
           <td class="py-3 px-4 text-center">
             <button onclick="togglePortalAppBlockRights('${sanitize(username)}')" class="px-2 py-1 rounded-lg border text-[10px] font-semibold transition-all ${isAppBlockRights ? 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/30' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700'}">
@@ -1174,6 +1234,12 @@
         `;
         tbody.appendChild(tr);
       });
+    }
+
+    function togglePasswordVisibility(key) {
+      visiblePasswords[key] = !visiblePasswords[key];
+      renderPortalUsers();
+      renderUsers();
     }
 
     function openPortalUserModal(username = null) {
@@ -1208,6 +1274,17 @@
       const username = document.getElementById('inputPortalUsername').value.trim();
       if (!username) return;
 
+      if (username.toLowerCase() === "admin") {
+        showToast("Cannot create or modify account with reserved name 'Admin' under portal users!", "error");
+        return;
+      }
+
+      const isCreating = !document.getElementById('inputPortalUsername').readOnly;
+      if (isCreating && dbData.portal_users[username]) {
+        showToast(`Portal user '${username}' already exists!`, "error");
+        return;
+      }
+
       const payload = {
         password: document.getElementById('inputPortalPassword').value,
         fullname: document.getElementById('inputPortalFullname').value,
@@ -1216,7 +1293,7 @@
       };
 
       await writeFirebaseNode(`portal_users/${username}`, payload);
-      showToast(`Portal User '${username}' saved`, "success");
+      showToast(`Portal User '${username}' saved successfully`, "success");
       closePortalUserModal();
     }
 
@@ -1243,6 +1320,54 @@
       }
     }
 
+    function openChangePasswordModal() {
+      document.getElementById('changePasswordForm').reset();
+      document.getElementById('changePasswordModal').classList.remove('hidden');
+    }
+
+    function closeChangePasswordModal() {
+      document.getElementById('changePasswordModal').classList.add('hidden');
+    }
+
+    async function saveNewPassword(e) {
+      e.preventDefault();
+      const newPass = document.getElementById('inputNewPass').value.trim();
+      const confirmPass = document.getElementById('inputConfirmPass').value.trim();
+
+      if (!newPass) {
+        showToast("Password cannot be empty", "warn");
+        return;
+      }
+
+      if (newPass !== confirmPass) {
+        showToast("Passwords do not match!", "error");
+        return;
+      }
+
+      const currentUser = getActiveAuthSession();
+
+      if (currentUser === "Admin") {
+        // Update Firebase Admin node directly
+        const updatedAdmin = {
+          ...dbData.admin,
+          pass: newPass,
+          password: newPass
+        };
+        await writeFirebaseNode('Admin', updatedAdmin);
+        showToast("Admin password updated successfully in Firebase /Admin!", "success");
+      } else {
+        // Update Portal User node in Firebase
+        if (dbData.portal_users[currentUser]) {
+          await writeFirebaseNode(`portal_users/${currentUser}/password`, newPass);
+          showToast(`Password updated successfully for ${currentUser}!`, "success");
+        } else {
+          showToast("User record not found!", "error");
+        }
+      }
+
+      closeChangePasswordModal();
+    }
+
     function renderUsers() {
       const tbody = document.getElementById('userTableBody');
       if (!tbody) return;
@@ -1257,6 +1382,9 @@
         return;
       }
 
+      const activeSession = getActiveAuthSession();
+      const isAdminSession = (activeSession === "Admin");
+
       userEntries.forEach(([username, user]) => {
         if (!user) return;
         if (roleFilter !== 'ALL' && user.role !== roleFilter) return;
@@ -1268,6 +1396,10 @@
         const isCamRights = user.camrights === 'Yes' || user.camrights === '1';
         const isActive = user.status === 'Active';
 
+        const isPassRevealed = visiblePasswords[`app_${username}`];
+        const rawPass = user.password || '';
+        const displayPass = isPassRevealed ? sanitize(rawPass) : '••••••••';
+
         const tr = document.createElement('tr');
         tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors";
         tr.innerHTML = `
@@ -1276,7 +1408,15 @@
               <i class="fa-solid fa-user-shield text-slate-400"></i>
               <span>${sanitize(username)}</span>
             </div>
-            <div class="text-[11px] text-slate-500 font-sans">${sanitize(user.realname || 'N/A')} • Pass: <span class="font-mono">${sanitize(user.password || '')}</span></div>
+            <div class="text-[11px] text-slate-500 font-sans flex items-center gap-2">
+              <span>${sanitize(user.realname || 'N/A')}</span> • Pass: 
+              <span class="font-mono">${displayPass}</span>
+              ${isAdminSession ? `
+                <button onclick="togglePasswordVisibility('app_${sanitize(username)}')" class="text-slate-400 hover:text-teal-500 text-xs">
+                  <i class="fa-solid ${isPassRevealed ? 'fa-eye-slash' : 'fa-eye'}"></i>
+                </button>
+              ` : ''}
+            </div>
           </td>
           <td class="py-3 px-4">
             <span class="px-2 py-0.5 text-[10px] rounded-full border ${user.role === 'Admin' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'}">
@@ -1407,6 +1547,12 @@
       const username = document.getElementById('inputUsername').value.trim();
       if (!username) return;
 
+      const isEditing = !document.getElementById('inputUsername').readOnly;
+      if (isEditing && dbData.users[username]) {
+        showToast(`User account '${username}' already exists!`, "error");
+        return;
+      }
+
       const payload = {
         password: document.getElementById('inputPassword').value,
         realname: document.getElementById('inputRealname').value,
@@ -1435,14 +1581,29 @@
       if (!grid) return;
       grid.innerHTML = '';
 
+      const searchInput = document.getElementById('cameraSearch');
+      const search = searchInput ? searchInput.value.toLowerCase() : '';
+
       const camEntries = Object.entries(dbData.cameras);
       if (camEntries.length === 0) {
         grid.innerHTML = `<div class="col-span-full text-center py-12 text-slate-400 font-mono">No cameras registered on server.</div>`;
         return;
       }
 
+      let filteredCount = 0;
+
       camEntries.forEach(([camId, cam]) => {
         if (!cam) return;
+        
+        const camName = (cam.cam_name || '').toLowerCase();
+        const ipAddr = (cam.ip_address || '').toLowerCase();
+        const idKey = camId.toLowerCase();
+
+        if (search && !idKey.includes(search) && !camName.includes(search) && !ipAddr.includes(search)) {
+          return;
+        }
+
+        filteredCount++;
         const rtspUrl = `rtsp://${cam.username || 'admin'}:${cam.password || '***'}@${cam.ip_address || '127.0.0.1'}:554${cam.stream_path || '/live/ch0'}`;
 
         const card = document.createElement('div');
@@ -1484,6 +1645,10 @@
         `;
         grid.appendChild(card);
       });
+
+      if (filteredCount === 0 && search) {
+        grid.innerHTML = `<div class="col-span-full text-center py-12 text-slate-400 font-mono">No cameras matched your search query.</div>`;
+      }
     }
 
     function openCameraModal(camId = null) {
@@ -1731,27 +1896,6 @@
       const actCount = Object.keys(dbData.user_activity).length;
       activityChart.data.datasets[0].data = [0, 0, Math.floor(actCount*0.2), Math.floor(actCount*0.5), Math.floor(actCount*0.8), actCount, actCount];
       activityChart.update();
-    }
-
-    // Config modal functions kept intact internally incase required programmatically
-    function openConfigModal() {
-      document.getElementById('inputDbUrl').value = FIREBASE_URL;
-      document.getElementById('configModal').classList.remove('hidden');
-    }
-
-    function closeConfigModal() {
-      document.getElementById('configModal').classList.add('hidden');
-    }
-
-    function saveConfigModal() {
-      const url = document.getElementById('inputDbUrl').value.trim();
-      if (url) {
-        FIREBASE_URL = url;
-        localStorage.setItem('visioncore_db_url', url);
-        fetchDataFromFirebase();
-        showToast("Firebase Database URL Updated", "success");
-        closeConfigModal();
-      }
     }
 
     function showToast(message, type = 'info') {
